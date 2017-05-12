@@ -22,7 +22,7 @@
         var webelex1=["radio","radio","radio"];
         
         svg();       
-        htmllayout();
+        //htmllayout();
      
         
         $(document).ready(function () {            
@@ -67,12 +67,12 @@
 			//render(dataSet);
 //           listItems(dataSet);
         });
+        
 		function set_open(){
             var file = this.files[0];
             console.log(file.path,file.name,file.type,file.size);
             document.f1.fname.value = file.name;
-        }
-        
+        }        
         function htmllayout(){
             var ritem= [
                 {id:"radiox1",name:"x1",value:1}, 
@@ -83,8 +83,7 @@
                 d3.select("body").append("radio").attr(ritem[i]);
             }     
             
-        }
-        
+        }        
         
         function row(d){
             
@@ -101,6 +100,7 @@
                 width: w,
                 height: h
             });
+            
             d3.select("svg").append("g").append("rect").attr({
                 width: "100%",
                 height: "100%",
@@ -225,7 +225,7 @@
         }
     </script>
     <!-- [============================================================================] -->
-    <form name="f1">[Control Bar]
+    <form name="f1">[D3js class Handel finish project "SELECT DATA" ]<br>[Control Bar]
     <input type="radio" id="seltype1" name=seltype1 value="1">x1 <input type="radio" id=seltype1 name="seltype1" value="2"> x2 <br>
      <!-- <div style="float:left;width:180px;"> -->
         <hr><div>

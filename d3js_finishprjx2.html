@@ -1,0 +1,385 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Untitled Document</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+    <script src="https://d3js.org/d3.v3.js"></script>
+    <style>
+        body{
+            background: #eee;
+        }
+        g.arc text{
+            fill: white;
+        }
+    </style>
+</head>
+<body>
+    <script>
+        var w = 900;
+        var h = 600;
+        var padding = 90;
+        var webelex1=["radio","radio","radio"];
+        var showtype=1;//
+		var sorted_dataSet=[];
+		
+        svg();       
+        //htmllayout();     
+        
+        $(document).ready(function () {            
+            var seltype = $("input[name*=seltype1]:radio");            
+            seltype.change(function () {
+                switch($(this).val()) {
+                    case '1':
+                        //alert("x1");
+						showtype=1;
+                        break;
+                    case '2':
+                        //alert("x2");
+						showtype=2;
+                        break;
+                    case '3':
+                        //alert("x2");
+						showtype=3;
+                        break;
+                }
+            });            
+            document.getElementById("myfile").addEventListener('change',set_open);
+        });
+              
+		//loadFile();
+        /*
+        d3.csv("./cancer_data.csv", row, function(dataSet){
+        //d3.csv("cancer_data.csv",  function(dataSet){
+            
+           //TODO-找出符合2013年國人(台閩地區)癌症前6名???
+           //var sorted_dataSet = [];
+           //==過濾
+		   //dataSet.length=6;
+			var fDataSet = dataSet.filter(function(d){
+               return d.date===2013 && d.city==="台閩地區" && d.category!="全癌症";
+			})    
+            
+		   //==排序
+			var sorted_dataSet = fDataSet.sort(function(a,b){
+               return d3.descending(a.crude_rate,b.crude_rate);
+			});
+            
+            sorted_dataSet.length=6;		   
+		   
+			bind(sorted_dataSet);
+			render(sorted_dataSet);
+			//bind(dataSet);
+			//render(dataSet);
+//           listItems(dataSet);
+        });*/
+        
+		function set_open(){
+            var file = this.files[0];
+            console.log(file.path,file.name,file.type,file.size);
+            document.f1.fname.value = file.name;
+        }        
+        function htmllayout(){
+            var ritem= [
+                {id:"radiox1",name:"x1",value:1}, 
+                {id:"radiox2",name:"x2",value:0},
+                {id:"radiox3",name:"x3",value:0} 
+            ];
+            for(var i=0;i<=ritem.length;i++){
+                d3.select("body").append("radio").attr(ritem[i]);
+            }     
+            
+        }        
+        
+        function row(d){
+            for(i in d){
+				if(!isNaN(d[i]))d[i]=Number(d[i]);
+			}
+            //d.incidence = +d.incidence;
+            //d.count     = +d.count;
+            //d.avg_age   = +d.avg_age;
+            //d.crude_rate= +d.crude_rate;            
+            return d;
+        }
+        
+        function svg(){
+            d3.select("body").append("svg").attr({
+                width: w,
+                height: h
+            });
+            
+            d3.select("svg").append("g").append("rect").attr({
+                width: "100%",
+                height: "100%",
+                fill: "white"
+            });
+           
+        }
+        
+        function bind(dataSet){
+            
+            var pie = d3.layout.pie()
+                        .value(function(d){
+                            return d.crude_rate;//###
+                        });
+
+            console.log(pie(dataSet));
+			
+            var selection = d3.select("svg")
+                                .selectAll("g.arc")
+                                .data(pie(dataSet));//###
+
+            var g_arc = selection.enter().append("g").attr("class","arc");
+            g_arc.append("path");
+            g_arc.append("text");
+            selection.exit().remove();
+        }
+        function render(dataSet){
+            var outerR = 300;
+            var innerR = 0;
+            var arc = d3.svg.arc()
+                        .outerRadius(outerR)
+                        .innerRadius(innerR);
+            
+            var fScale = d3.scale.category20();
+            
+            d3.selectAll("g.arc")
+              //TODO-好像缺了什麼，位置怪怪
+              .attr("transform","translate("+w/2+","+h/2+")")
+              .select("path")
+              .attr("d", arc)
+              .style("fill", function(d,i) { return fScale(i); });
+            
+            d3.selectAll("g.arc")
+              .select("text")
+              .attr("transform", function(d) { return "translate(" + arc.centroid(d)+ ")"; })  //arc.centroid 計算並回傳此元素中心位置(重心)
+              .attr({
+                "text-anchor":"middle",
+                dy: 120,
+                dx: 120
+              })
+              .text(function(d){
+                return d.data.category+ " "+d.data.crude_rate;    
+            });
+			
+            // d3.selectAll("g.arc")
+            //TODO-好像缺了什麼，位置怪怪
+				// .attr("transform","translate("+w/2+","+h/2+")")
+              // .select("path")
+              // .attr("d", arc)
+              // .style("fill", function(d,i) { return fScale(i); });
+            
+            // d3.selectAll("g.arc")
+              // .select("text")
+              // .attr("transform", function(d) { return "translate(" + arc.centroid(d) + ")"; })  //arc.centroid 計算並回傳此元素中心位置(重心)
+              // .attr("text-anchor","middle")
+              // .text(function(d){
+                // return d.data.category+ " "+d.data.crude_rate;    
+            // })            
+        }
+        
+        function listItems(dataSet){
+                       
+            //TODO-如何產生年份按鈕???
+            var cityArr = [];
+            
+            var uniqueIndustryArr = unique(cityArr);
+            var filterIndustryArr = uniqueIndustryArr.filter(function(d){
+               return d!=""; 
+            });
+                
+            var selection = d3.select("body")
+                .append("div")
+                .attr("id", "city")
+                .selectAll("input")
+                .data(filterIndustryArr)
+                .attr({
+                    type: "button",
+                    value: function(d){
+                        return d;
+                    }
+                });
+			selection.enter()
+                .append("input")
+                .attr({
+                    type: "button",
+                    value: function(d){
+                        return d;
+                    }
+                })
+                .on("click",function(d){
+                        update(d);
+                });
+				
+            function update(filteredName){
+                //TODO-找出符合2013年國人(台閩地區)癌症前6名???
+                var sorted_dataSet = [];
+                
+                bind(sorted_dataSet);
+                render(sorted_dataSet);
+            }
+            
+        }
+		
+        function unique(array){
+          var n = []; 
+          for(var i = 0; i < array.length; i++){
+            if (n.indexOf(array[i]) == -1){
+                n.push(array[i]);
+            }
+          }
+          return n;
+        }
+    
+		function loadFile(){
+			//var loadfname = $."#fname".value;
+			var loadfname = $('input[name="fname"]').val();
+
+			if(loadfname.length>5){
+				
+				d3.csv("./"+loadfname, row, function(dataSet){
+				//d3.csv("cancer_data.csv",  function(dataSet){
+					
+				   //TODO-找出符合2013年國人(台閩地區)癌症前6名???
+				   //var sorted_dataSet = [];
+				   //==過濾
+				   //dataSet.length=6;
+				    
+					var fDataSet = dataSet.filter(function(d){
+					   //return d.date===2013 && d.city==="台閩地區" && d.category!="全癌症";
+					   return d.category!="全癌症";
+					})    
+					
+				   //==排序
+					//var sorted_dataSet = fDataSet.sort(function(a,b){
+					sorted_dataSet = fDataSet.sort(function(a,b){
+					   return d3.descending(a.crude_rate,b.crude_rate);
+					});
+					
+					sorted_dataSet.length=100;	
+					
+					select_clearall(document.f1.lab);	
+					var inx=0;
+					for(i in sorted_dataSet[0]){
+						console.log(i);
+						document.f1.lab.options[inx] = new Option(i, i);
+						inx++;
+					}
+					
+					bind(sorted_dataSet);
+					render(sorted_dataSet);
+					//bind(dataSet);
+					//render(dataSet);
+		//           listItems(dataSet);
+				});
+			}
+		}
+		
+		//==clear select array to null
+        function select_clearall(sel) {
+            for (i = 0; i <= sel.length; i++) {
+                sel.options[i] = null;
+            };
+            sel.options[0] = null;
+        }	
+		function unique(array){
+			var n = []; 
+			for(var i = 0; i < array.length; i++){
+				if (n.indexOf(array[i]) == -1){
+					n.push(array[i]);
+				}
+			}
+			return n;
+		}	
+		
+		function selx(inx){
+			document.f1.xlab.value = document.f1.lab.options[inx].value;
+			var key = document.f1.lab.options[inx].value;
+			console.log(sorted_dataSet[0][key]);
+			if(isNaN(sorted_dataSet[0][key])||(key=="date")){
+				var sublab = sorted_dataSet.map(function(d){
+					return d[key];
+				});  
+				var subx1 = unique(sublab);
+				select_clearall(document.f1.xsublab);
+				var inx=0;
+				for(i in subx1){
+					console.log(subx1[i]);
+					document.f1.xsublab.options[inx] = new Option(subx1[i], subx1[i]);
+					inx++;
+				}
+			}else{			
+				select_clearall(document.f1.xsublab);
+				//document.f1.xsublab.options[inx] = new Option("Number", "Number");
+			}
+		}
+		function sely(inx){		
+			document.f1.ylab.value = document.f1.lab.options[inx].value;
+			var key = document.f1.lab.options[inx].value;
+			console.log(sorted_dataSet[0][key]);
+			if(isNaN(sorted_dataSet[0][key])||(key=="date")){
+				var sublab = sorted_dataSet.map(function(d){
+					return d[key];
+				});  
+				var subx1 = unique(sublab);
+				select_clearall(document.f1.ysublab);
+				var inx=0;
+				for(i in subx1){
+					console.log(subx1[i]);
+					document.f1.ysublab.options[inx] = new Option(subx1[i], subx1[i]);
+					inx++;
+				}
+			}else{			
+				select_clearall(document.f1.ysublab);
+				//document.f1.xsublab.options[inx] = new Option("Number", "Number");
+			}
+		}
+		function selp(inx){		
+			document.f1.plab.value = document.f1.lab.options[inx].value;
+		}
+	</script>
+    <!-- [============================================================================] -->
+    <form name="f1">[D3js class Handel finish project "SELECT DATA" ]<br>[Select Chart]
+    <input type="radio" id="seltype1" name="seltype1" value="1"> [Line Chart] 
+	<input type="radio" id="seltype1" name="seltype1" value="2"> [Bar  Chart] 
+	<input type="radio" id="seltype1" name="seltype1" value="3"> [Pie  Chart] <br>
+     <!-- <div style="float:left;width:180px;"> -->
+        <hr><div>
+        <label style="background-color:red;color:white;"> [Select file ]
+            <input id="myfile" type="file" style="position: fixed; top: -100em" >
+        </label>
+        <input type="button" value="LoadFile" onclick="loadFile()">
+        <input id="fname" type="text" name=fname size=40 value="" /><br>
+        </div><hr>
+        <div style="float:left;" >
+        <select id="lab" name="lab" size=5 >
+			<option value="">"load data label"
+        </select><br>
+        </div>
+        <div style="float:left;">
+        >><input type="button" value="X-Axis" onclick="selx(lab.selectedIndex)">
+        <input id="xlab" type="text" name=xlab size=20 value="" /><br>
+        >><input type="button" value="Y-Axis" onclick="sely(lab.selectedIndex)">
+        <input id="ylab" type="text" name=ylab size=20 value="" /><br>
+        >><input type="button" value="P-Value" onclick="selp(lab.selectedIndex)">
+        <input id="plab" type="text" name=plab size=20 value="" /><br>
+        </div>  
+		<div style="float:left;">
+		 [Sub xItem] <br>
+        <select id="xsublab" name="xsublab" size=5 >
+			<option value="">"Sub label"
+        </select><br>		
+		 </div><div>
+		 [Sub yItem] <br>
+        <select id="ysublab" name="ysublab" size=5 >
+			<option value="">"Sub label"
+        </select><br>		
+		</div>
+        
+    </form>
+    <form name="f2">
+    
+    </form>
+   
+</body>
+</html>
